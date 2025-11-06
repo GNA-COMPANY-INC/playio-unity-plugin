@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<dependencies>
+    <androidPackages>
+        <androidPackage spec="com.google.android.gms:play-services-ads-identifier:18.0.1">
+        </androidPackage>
+        <androidPackage spec="com.google.code.gson:gson:2.10.1">
+        </androidPackage>
+    </androidPackages>
+</dependencies>
