@@ -28,7 +28,7 @@ namespace PlayioSDK
             DontDestroyOnLoad(gameObject);
             if (string.IsNullOrEmpty(clientId))
             {
-                Debug.LogError("Playio Client ID is not set!");
+                PlayioLogger.LogError("Playio Client ID is not set!");
                 return;
             }
             PlayioConfig config = new PlayioConfig.Builder()
@@ -42,7 +42,7 @@ namespace PlayioSDK
         {
             playTimeTracker = new PlayTimeTracker(this);
             playTimeTracker.OnPlayTimeRecorded += OnPlayTimeRecorded;
-            Debug.Log("Playio SDK initialized, IsSDKStopped: " + IsSdkStopped());
+            PlayioLogger.Log("Playio SDK initialized, IsSDKStopped: " + IsSdkStopped());
             if (!IsSdkStopped())
             {
                 playTimeTracker.StartTracking();
@@ -51,25 +51,32 @@ namespace PlayioSDK
 
         void OnApplicationPause(bool pauseStatus)
         {
-            if (IsSdkStopped()) return;
             if (playTimeTracker == null) return;
+            
             if (pauseStatus)
             {
+                // App is going to background - stop tracking and send data
                 playTimeTracker.StopTracking();
-                playTimeTracker.InvokeHandlerAndReset();
+                playTimeTracker.FlushPlayTime();
             }
             else
             {
-                playTimeTracker.StartTracking();
+                // App is resuming - restart tracking if SDK is active
+                if (!IsSdkStopped())
+                {
+                    playTimeTracker.StartTracking();
+                }
             }
         }
 
         void OnApplicationQuit()
         {
-            if (IsSdkStopped()) return;
             if (playTimeTracker == null) return;
+            
+            // Stop tracking and send final data
             playTimeTracker.StopTracking();
-            playTimeTracker.InvokeHandlerAndReset();
+            playTimeTracker.FlushPlayTime();
+            playTimeTracker.Dispose();
         }
 
         void OnDestroy()
@@ -77,6 +84,8 @@ namespace PlayioSDK
             if (playTimeTracker != null)
             {
                 playTimeTracker.OnPlayTimeRecorded -= OnPlayTimeRecorded;
+                playTimeTracker.Dispose();
+                playTimeTracker = null;
             }
         }
 
@@ -86,7 +95,7 @@ namespace PlayioSDK
             {
                 if (instance == null)
                 {
-                    Debug.LogError("Playio instance is not found in the scene. Please add the Playio prefab to your scene.");
+                    PlayioLogger.LogError("Playio instance is not found in the scene. Please add the Playio prefab to your scene.");
                 }
                 return instance;
             }
@@ -94,7 +103,8 @@ namespace PlayioSDK
 
         public void Init(PlayioConfig config)
         {
-            Debug.Log("Initializing Playio SDK with Client ID: " + config.clientId);
+            PlayioLogger.SetLogLevel(config.logLevel);
+            PlayioLogger.Log("Initializing Playio SDK with Client ID: " + config.clientId);
             PlayioAPI.Init(config);
         }
 
@@ -107,19 +117,27 @@ namespace PlayioSDK
         {
             foreach (var attribute in attributes)
             {
-                Debug.Log($"Playio user attribute set: {attribute.Key} = {attribute.Value}");
+                PlayioLogger.Log($"Playio user attribute set: {attribute.Key} = {attribute.Value}");
             }
         }
 
         public void StartSdk()
         {
             PlayioAPI.Start();
+            if (playTimeTracker != null && !IsSdkStopped())
+            {
+                playTimeTracker.StartTracking();
+            }
         }
 
         public void StopSdk()
         {
             PlayioAPI.Stop();
-            playTimeTracker.StopTracking();
+            if (playTimeTracker != null)
+            {
+                playTimeTracker.StopTracking();
+                playTimeTracker.FlushPlayTime(); // Send any remaining playtime
+            }
         }
 
 
@@ -145,7 +163,7 @@ namespace PlayioSDK
 
         private void OnPlayTimeRecorded(float playTime)
         {
-            Debug.Log("Playtime recorded: " + playTime + " seconds.");
+            PlayioLogger.Log("Playtime recorded: " + playTime + " seconds.");
             var eventParams = new Dictionary<string, string>
             {
                 { "play_time_seconds", playTime.ToString() }

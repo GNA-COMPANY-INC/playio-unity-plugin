@@ -6,7 +6,6 @@ namespace PlayioSDK
 {
     public class DictionaryUtil
     {
-        // https://github.com/AppsFlyerSDK/appsflyer-unity-plugin/blob/a2bbbf0eee56f656b7acb1c3904c1245342f17f3/Assets/AppsFlyer/AppsFlyerAndroid.cs#L666
         internal static AndroidJavaObject toJavaMap(Dictionary<string, string> dictionary)
         {
             AndroidJavaObject map = new AndroidJavaObject("java.util.HashMap");
