@@ -14,12 +14,12 @@ namespace PlayioSDK
             NativeInterface.SetUserId(userId);
         }
 
-        internal static void SetUserAttributes(Dictionary<string, string> attributes)
+        internal static void SetUserAttributes(Dictionary<string, object> attributes)
         {
             NativeInterface.SetUserAttributes(attributes);
         }
 
-        internal static void SendEvent(string eventName, Dictionary<string, string> parameters)
+        internal static void SendEvent(string eventName, Dictionary<string, object> parameters)
         {
             NativeInterface.SendEvent(eventName, parameters);
         }

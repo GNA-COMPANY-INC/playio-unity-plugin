@@ -1,4 +1,5 @@
 #if UNITY_IOS
+using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using UnityEngine;
@@ -46,14 +47,14 @@ namespace PlayioSDK
             PlayioSetUserId(userId);
         }
 
-        internal static void SetUserAttributes(Dictionary<string, string> attributes)
+        internal static void SetUserAttributes(Dictionary<string, object> attributes)
         {
             if (!Application.isPlaying) { return; }
             string json = DictionaryToJson(attributes);
             PlayioSetUserAttributes(json);
         }
 
-        internal static void SendEvent(string eventName, Dictionary<string, string> parameters)
+        internal static void SendEvent(string eventName, Dictionary<string, object> parameters)
         {
             if (!Application.isPlaying) { return; }
             string json = DictionaryToJson(parameters);
@@ -90,7 +91,7 @@ namespace PlayioSDK
             PlayioDisableCollectAdvertisingIdentifier(disable);
         }
 
-        private static string DictionaryToJson(Dictionary<string, string> dictionary)
+        private static string DictionaryToJson(Dictionary<string, object> dictionary)
         {
             if (dictionary == null || dictionary.Count == 0)
             {
@@ -101,11 +102,58 @@ namespace PlayioSDK
             foreach (var kvp in dictionary)
             {
                 string key = EscapeJsonString(kvp.Key);
-                string value = EscapeJsonString(kvp.Value);
-                pairs.Add($"\"{key}\":\"{value}\"");
+                string value = ConvertValueToJson(kvp.Value);
+                pairs.Add($"\"{key}\":{value}");
             }
 
             return "{" + string.Join(",", pairs.ToArray()) + "}";
+        }
+
+        private static string ConvertValueToJson(object value)
+        {
+            if (value == null)
+            {
+                return "null";
+            }
+
+            // Handle boolean
+            if (value is bool boolValue)
+            {
+                return boolValue ? "true" : "false";
+            }
+
+            // Handle numeric types (no quotes)
+            if (value is int || value is long || value is byte || value is sbyte || 
+                value is short || value is ushort || value is uint || value is ulong)
+            {
+                // Integer types - use invariant culture
+                return Convert.ToInt64(value).ToString(System.Globalization.CultureInfo.InvariantCulture);
+            }
+
+            if (value is float floatValue)
+            {
+                return floatValue.ToString("G", System.Globalization.CultureInfo.InvariantCulture);
+            }
+
+            if (value is double doubleValue)
+            {
+                return doubleValue.ToString("G", System.Globalization.CultureInfo.InvariantCulture);
+            }
+
+            if (value is decimal decimalValue)
+            {
+                return decimalValue.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            }
+
+            // Handle string (with quotes and escaping)
+            if (value is string stringValue)
+            {
+                return "\"" + EscapeJsonString(stringValue) + "\"";
+            }
+
+            // For unsupported types, convert to string
+            PlayioLogger.LogWarning($"Unsupported type {value.GetType()} in event parameters, converting to string");
+            return "\"" + EscapeJsonString(value.ToString()) + "\"";
         }
 
         private static string EscapeJsonString(string str)

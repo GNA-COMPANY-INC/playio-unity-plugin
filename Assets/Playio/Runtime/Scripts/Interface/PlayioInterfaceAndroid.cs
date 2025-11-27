@@ -31,13 +31,13 @@ namespace PlayioSDK
             Invoke("setUserId", userId);
         }
 
-        internal static void SetUserAttributes(Dictionary<string, string> attributes)
+        internal static void SetUserAttributes(Dictionary<string, object> attributes)
         {
             if (!Application.isPlaying) { return; }
             Invoke("setUserAttributes", attributes);
         }
 
-        internal static void SendEvent(string eventName, Dictionary<string, string> parameters)
+        internal static void SendEvent(string eventName, Dictionary<string, object> parameters)
         {
             if (!Application.isPlaying) { return; }
             Invoke("sendEvent", eventName, parameters);
@@ -82,9 +82,9 @@ namespace PlayioSDK
             // if parameter is Dictionary, convert it to JavaMap
             for (int i = 0; i < parameters.Length; i++)
             {
-                if (parameters[i] is System.Collections.Generic.Dictionary<string, string>)
+                if (parameters[i] is System.Collections.Generic.Dictionary<string, object>)
                 {
-                    parameters[i] = DictionaryUtil.toJavaMap(parameters[i] as System.Collections.Generic.Dictionary<string, string>);
+                    parameters[i] = DictionaryUtil.toJavaMap(parameters[i] as System.Collections.Generic.Dictionary<string, object>);
                 }
             }
             wrapper.Call(method, parameters);

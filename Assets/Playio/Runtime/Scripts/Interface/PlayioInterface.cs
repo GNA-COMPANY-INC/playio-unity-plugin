@@ -9,9 +9,9 @@ namespace PlayioSDK
 
         internal static void SetUserId(string userId) { }
 
-        internal static void SetUserAttributes(Dictionary<string, string> attributes) { }
+        internal static void SetUserAttributes(Dictionary<string, object> attributes) { }
 
-        internal static void SendEvent(string eventName, Dictionary<string, string> parameters) { }
+        internal static void SendEvent(string eventName, Dictionary<string, object> parameters) { }
 
         internal static void Start() { }
 

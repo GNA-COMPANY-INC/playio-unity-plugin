@@ -113,7 +113,7 @@ namespace PlayioSDK
             PlayioAPI.SetUserId(userId);
         }
 
-        public void SetUserAttributes(Dictionary<string, string> attributes)
+        public void SetUserAttributes(Dictionary<string, object> attributes)
         {
             foreach (var attribute in attributes)
             {
@@ -151,7 +151,7 @@ namespace PlayioSDK
             return PlayioAPI.GetSdkVersion();
         }
 
-        public void SendEvent(string eventName, Dictionary<string, string> eventParams)
+        public void SendEvent(string eventName, Dictionary<string, object> eventParams)
         {
             PlayioAPI.SendEvent(eventName, eventParams);
         }
@@ -164,9 +164,9 @@ namespace PlayioSDK
         private void OnPlayTimeRecorded(float playTime)
         {
             PlayioLogger.Log("Playtime recorded: " + playTime + " seconds.");
-            var eventParams = new Dictionary<string, string>
+            var eventParams = new Dictionary<string, object>
             {
-                { "play_time_seconds", playTime.ToString() }
+                { "play_time_seconds", playTime }
             };
             SendEvent("play_time_recorded", eventParams);
         }
