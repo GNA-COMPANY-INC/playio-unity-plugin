@@ -48,5 +48,10 @@ namespace PlayioSDK
         {
             NativeInterface.DisableCollectAdvertisingIdentifier(disable);
         }
+
+        internal static void OnTimeEvent(long startMillis, long endMillis)
+        {
+            NativeInterface.OnTimeEvent(startMillis, endMillis);
+        }
     }
 }

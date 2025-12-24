@@ -10,50 +10,63 @@ namespace PlayioSDK
         {
             AndroidJavaObject map = new AndroidJavaObject("java.util.HashMap");
             IntPtr putMethod = AndroidJNIHelper.GetMethodID(map.GetRawClass(), "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
-            jvalue[] val;
-            if (dictionary != null)
+
+            if (dictionary == null)
             {
-                foreach (var entry in dictionary)
-                {
-                    object javaValue = ConvertToJavaObject(entry.Value);
-                    val = AndroidJNIHelper.CreateJNIArgArray(new object[] { entry.Key, javaValue });
-                    AndroidJNI.CallObjectMethod(map.GetRawObject(), putMethod, val);
-                    AndroidJNI.DeleteLocalRef(val[0].l);
-                    AndroidJNI.DeleteLocalRef(val[1].l);
-                }
+                return map;
+            }
+
+            object[] args = new object[2];
+            foreach (var kvp in dictionary)
+            {
+                AndroidJavaObject k = new AndroidJavaObject("java.lang.String", kvp.Key);
+                AndroidJavaObject v = ConvertToJavaObject(kvp.Value);
+
+                args[0] = k;
+                args[1] = v;
+
+                AndroidJNI.CallObjectMethod(map.GetRawObject(), putMethod, AndroidJNIHelper.CreateJNIArgArray(args));
             }
 
             return map;
         }
 
-        private static object ConvertToJavaObject(object value)
+        private static AndroidJavaObject ConvertToJavaObject(object value)
         {
             if (value == null)
             {
                 return null;
             }
 
-            // Handle primitive types
-            if (value is string || value is bool || value is int || value is long || 
-                value is float || value is double)
+            if (value is int)
             {
-                return value;
+                return new AndroidJavaObject("java.lang.Integer", value);
             }
-
-            // Convert other numeric types to appropriate Java types
-            if (value is byte || value is sbyte || value is short || value is ushort)
+            else if (value is long)
             {
-                return Convert.ToInt32(value);
+                return new AndroidJavaObject("java.lang.Long", value);
             }
-
-            if (value is uint || value is ulong)
+            else if (value is double)
             {
-                return Convert.ToInt64(value);
+                return new AndroidJavaObject("java.lang.Double", value);
             }
-
-            // For unsupported types, convert to string
-            PlayioLogger.LogWarning($"Unsupported type {value.GetType()} in event parameters, converting to string");
-            return value.ToString();
+            else if (value is float)
+            {
+                return new AndroidJavaObject("java.lang.Float", value);
+            }
+            else if (value is bool)
+            {
+                return new AndroidJavaObject("java.lang.Boolean", value);
+            }
+            else if (value is string)
+            {
+                return new AndroidJavaObject("java.lang.String", value);
+            }
+            else
+            {
+                PlayioLogger.LogWarning($"Unsupported type {value.GetType()} in event parameters, converting to string");
+                return new AndroidJavaObject("java.lang.String", value.ToString());
+            }
         }
     }
 }

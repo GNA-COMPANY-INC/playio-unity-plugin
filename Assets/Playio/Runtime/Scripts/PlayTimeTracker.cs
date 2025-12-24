@@ -6,15 +6,14 @@ namespace PlayioSDK
 {
     internal class PlayTimeTracker : IDisposable
     {
-        private float accumulatedPlayTime = 0f;
-        private float sessionStartTime = 0f;
+        private long sessionStartMillis = 0;
         private bool isTracking = false;
         private bool isDisposed = false;
         private Coroutine trackingRoutine;
         private MonoBehaviour coroutineRunner;
         private readonly float reportIntervalSeconds;
 
-        public delegate void PlayTimeEventHandler(float playTime);
+        public delegate void PlayTimeEventHandler(long startMillis, long endMillis);
         public event PlayTimeEventHandler OnPlayTimeRecorded;
 
         /// <summary>
@@ -50,15 +49,15 @@ namespace PlayioSDK
             if (!isTracking)
             {
                 isTracking = true;
-                sessionStartTime = Time.realtimeSinceStartup;
+                sessionStartMillis = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
                 if (trackingRoutine != null)
                 {
                     coroutineRunner.StopCoroutine(trackingRoutine);
                 }
                 trackingRoutine = coroutineRunner.StartCoroutine(TrackingRoutine());
-                
-                PlayioLogger.Log("Playtime tracking started.");
+
+                PlayioLogger.Log($"Playtime tracking started at {sessionStartMillis}");
             }
         }
 
@@ -69,8 +68,6 @@ namespace PlayioSDK
                 return;
             }
 
-            // Accumulate the remaining session time before stopping
-            AccumulateCurrentSession();
             isTracking = false;
 
             if (trackingRoutine != null && coroutineRunner != null)
@@ -79,7 +76,7 @@ namespace PlayioSDK
                 trackingRoutine = null;
             }
 
-            PlayioLogger.Log($"Playtime tracking stopped. Accumulated time: {accumulatedPlayTime}s");
+            PlayioLogger.Log("Playtime tracking stopped.");
         }
 
         private IEnumerator TrackingRoutine()
@@ -101,58 +98,45 @@ namespace PlayioSDK
                     yield break;
                 }
 
-                // Accumulate time and reset session start
-                AccumulateCurrentSession();
-
-                // Send accumulated playtime
+                // Send time event and start new session
                 SendPlayTimeEvent();
             }
         }
 
         private void SendPlayTimeEvent()
         {
-            if (accumulatedPlayTime > 0)
+            if (sessionStartMillis <= 0)
             {
-                float playTimeToSend = accumulatedPlayTime;
-                accumulatedPlayTime = 0f;
+                return;
+            }
 
-                try
-                {
-                    PlayioLogger.Log($"Sending playtime event: {playTimeToSend}s");
-                    OnPlayTimeRecorded?.Invoke(playTimeToSend);
-                }
-                catch (Exception ex)
-                {
-                    PlayioLogger.LogError($"Error invoking OnPlayTimeRecorded: {ex.Message}");
-                    // Restore accumulated time on failure
-                    accumulatedPlayTime += playTimeToSend;
-                }
+            long endMillis = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            long startMillis = sessionStartMillis;
+
+            // Start new session immediately
+            sessionStartMillis = endMillis;
+
+            try
+            {
+                PlayioLogger.Log($"Sending time event: {startMillis} ~ {endMillis}");
+                OnPlayTimeRecorded?.Invoke(startMillis, endMillis);
+            }
+            catch (Exception ex)
+            {
+                PlayioLogger.LogError($"Error invoking OnPlayTimeRecorded: {ex.Message}");
             }
         }
 
         /// <summary>
-        /// Accumulates the current session time if tracking is active.
-        /// Resets the session start time to now.
-        /// </summary>
-        private void AccumulateCurrentSession()
-        {
-            if (isTracking)
-            {
-                float currentSessionTime = Time.realtimeSinceStartup - sessionStartTime;
-                accumulatedPlayTime += currentSessionTime;
-                sessionStartTime = Time.realtimeSinceStartup;
-            }
-        }
-
-        /// <summary>
-        /// Manually triggers sending of accumulated playtime.
-        /// Useful for force-flushing data.
+        /// Manually triggers sending of time event.
+        /// Useful for force-flushing data before pause/quit.
         /// </summary>
         public void FlushPlayTime()
         {
-            // If currently tracking, update the accumulated time first
-            AccumulateCurrentSession();
-            SendPlayTimeEvent();
+            if (sessionStartMillis > 0)
+            {
+                SendPlayTimeEvent();
+            }
         }
 
         public void Dispose()

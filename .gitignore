@@ -10,6 +10,13 @@
 [Bb]uilds/
 [Ll]ogs/
 [Uu]ser[Ss]ettings/
+/[Pp]roject[Ss]ettings/
+!/[Pp]roject[Ss]ettings/ProjectSettings.asset
+/[Pp]ackages/*
+!/[Pp]ackages/manifest.json
+/[Ss]ettings.json
+*.json.meta
+
 *.log
 
 # By default unity supports Blender asset imports, *.blend1 blender files do not need to be commited to version control.
@@ -99,7 +106,6 @@ ServerData/
 [Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
 
 # Custom ignores
-playio-ios-unity/build/
 .DS_Store
 
 # VSCode

@@ -1,4 +1,4 @@
-#if UNITY_IOS
+#if UNITY_IOS && !UNITY_EDITOR
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
@@ -34,6 +34,9 @@ namespace PlayioSDK
 
         [DllImport("__Internal")]
         private static extern void PlayioDisableCollectAdvertisingIdentifier(bool disable);
+
+        [DllImport("__Internal")]
+        private static extern void PlayioOnTimeEvent(long startMillis, long endMillis);
 
         internal static void Init(PlayioConfig config)
         {
@@ -89,6 +92,12 @@ namespace PlayioSDK
         {
             if (!Application.isPlaying) { return; }
             PlayioDisableCollectAdvertisingIdentifier(disable);
+        }
+
+        internal static void OnTimeEvent(long startMillis, long endMillis)
+        {
+            if (!Application.isPlaying) { return; }
+            PlayioOnTimeEvent(startMillis, endMillis);
         }
 
         private static string DictionaryToJson(Dictionary<string, object> dictionary)
