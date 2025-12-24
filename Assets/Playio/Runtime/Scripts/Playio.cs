@@ -8,7 +8,7 @@ namespace PlayioSDK
     public class Playio : MonoBehaviour
     {
         [SerializeField]
-        private string clientId;
+        private LogLevel logLevel = LogLevel.NONE;
 
         private static Playio instance;
         private PlayTimeTracker playTimeTracker;
@@ -26,14 +26,8 @@ namespace PlayioSDK
                 return;
             }
             DontDestroyOnLoad(gameObject);
-            if (string.IsNullOrEmpty(clientId))
-            {
-                PlayioLogger.LogError("Playio Client ID is not set!");
-                return;
-            }
             PlayioConfig config = new PlayioConfig.Builder()
-                .SetClientId(clientId)
-                .SetLogLevel(LogLevel.DEBUG)
+                .SetLogLevel(logLevel)
                 .Build();
             Init(config);
         }
@@ -52,7 +46,7 @@ namespace PlayioSDK
         void OnApplicationPause(bool pauseStatus)
         {
             if (playTimeTracker == null) return;
-            
+
             if (pauseStatus)
             {
                 // App is going to background - stop tracking and send data
@@ -72,7 +66,7 @@ namespace PlayioSDK
         void OnApplicationQuit()
         {
             if (playTimeTracker == null) return;
-            
+
             // Stop tracking and send final data
             playTimeTracker.StopTracking();
             playTimeTracker.FlushPlayTime();
@@ -104,7 +98,6 @@ namespace PlayioSDK
         public void Init(PlayioConfig config)
         {
             PlayioLogger.SetLogLevel(config.logLevel);
-            PlayioLogger.Log("Initializing Playio SDK with Client ID: " + config.clientId);
             PlayioAPI.Init(config);
         }
 
@@ -161,14 +154,10 @@ namespace PlayioSDK
             PlayioAPI.DisableCollectAdvertisingIdentifier(disable);
         }
 
-        private void OnPlayTimeRecorded(float playTime)
+        private void OnPlayTimeRecorded(long startMillis, long endMillis)
         {
-            PlayioLogger.Log("Playtime recorded: " + playTime + " seconds.");
-            var eventParams = new Dictionary<string, object>
-            {
-                { "play_time_seconds", playTime }
-            };
-            SendEvent("play_time_recorded", eventParams);
+            PlayioLogger.Log($"Time event: {startMillis} ~ {endMillis}");
+            PlayioAPI.OnTimeEvent(startMillis, endMillis);
         }
     }
 }

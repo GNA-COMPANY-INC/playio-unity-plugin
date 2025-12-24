@@ -38,7 +38,8 @@ namespace PlayioSDK
             {
                 if (string.IsNullOrEmpty(this.clientId))
                 {
-                    throw new System.Exception("PlayioConfig: Client ID must be set.");
+                    // throw new System.Exception("PlayioConfig: Client ID must be set.");
+                    this.clientId = ""; // Beta testing purpose
                 }
                 return new PlayioConfig
                 {

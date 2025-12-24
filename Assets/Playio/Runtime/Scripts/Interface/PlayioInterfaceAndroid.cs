@@ -1,4 +1,4 @@
-#if UNITY_ANDROID
+#if UNITY_ANDROID && !UNITY_EDITOR
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -71,6 +71,12 @@ namespace PlayioSDK
         {
             if (!Application.isPlaying) { return; }
             Invoke("disableCollectAdvertisingIdentifier", disable);
+        }
+
+        internal static void OnTimeEvent(long startMillis, long endMillis)
+        {
+            if (!Application.isPlaying) { return; }
+            Invoke("onTimeEvent", startMillis, endMillis);
         }
 
         private static void Invoke(
