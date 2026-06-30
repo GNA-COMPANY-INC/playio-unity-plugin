@@ -108,10 +108,7 @@ namespace PlayioSDK
 
         public void SetUserAttributes(Dictionary<string, object> attributes)
         {
-            foreach (var attribute in attributes)
-            {
-                PlayioLogger.Log($"Playio user attribute set: {attribute.Key} = {attribute.Value}");
-            }
+            PlayioAPI.SetUserAttributes(attributes);
         }
 
         public void StartSdk()
